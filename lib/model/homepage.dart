@@ -53,39 +53,74 @@ class _TodoApplicationState extends State<TodoApplication> {
         backgroundColor: const Color.fromARGB(255, 21, 4, 145),
         centerTitle: true,
       ),
-      body: ListView.builder(
-        itemCount: widget.todos.length,
-        itemBuilder: (ctx, i) {
-          return ListTile(
-            leading: Checkbox(
-              value: widget.todos[i].isCompleted,
-              onChanged: (value) {
-                setState(() {
-                  widget.todos[i].isCompleted = value ?? false;
-                });
-              },
-            ),
-            title: Text(widget.todos[i].title),
-            subtitle: Text(widget.todos[i].description),
-            trailing: IconButton(
-              onPressed: () {
-                showDialog(
-                  context: context,
-                  builder: (context) {
-                    return AlertDialog();
-                  },
-                );
 
-                // setState(() {
-                //   widget.todos.remove(widget.todos[i]);
-                // });
-              },
-              icon: Icon(Icons.delete),
-              color: Colors.red,
-            ),
-          );
-        },
-      ),
+      body:
+          widget.todos.isEmpty
+              ? Center(child: Text("No todos"))
+              : ListView.builder(
+                itemCount: widget.todos.length,
+                itemBuilder: (ctx, i) {
+                  return ListTile(
+                    leading: Checkbox(
+                      value: widget.todos[i].isCompleted,
+                      onChanged: (value) {
+                        setState(() {
+                          widget.todos[i].isCompleted = value ?? false;
+                        });
+                      },
+                    ),
+                    title: Text(widget.todos[i].title),
+                    subtitle: Text(widget.todos[i].description),
+                    trailing: IconButton(
+                      onPressed: () {
+                        showDialog(
+                          context: context,
+                          builder: (context) {
+                            return AlertDialog(
+                              title: Text("Are you want to delete"),
+                              content: Text("This action is irrevesable"),
+                              actions: [
+                                FilledButton.tonal(
+                                  style: FilledButton.styleFrom(
+                                    backgroundColor: Colors.deepPurple.shade400,
+                                    foregroundColor: Colors.white,
+                                  ),
+
+                                  onPressed: () {
+                                    setState(() {
+                                      widget.todos.remove(widget.todos[i]);
+                                    });
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        backgroundColor:
+                                            Colors.greenAccent.shade700,
+                                        behavior: SnackBarBehavior.floating,
+                                        duration: Duration(seconds: 1),
+                                        content: Text("Deleted Successfully"),
+                                      ),
+                                    );
+
+                                    Navigator.of(context).pop();
+                                  },
+                                  child: Text("Yes"),
+                                ),
+
+                                // FilledButton(onPressed: onPressed, child: child)
+                              ],
+                            );
+                          },
+                        );
+
+                        // setState(() {
+                        //   widget.todos.remove(widget.todos[i]);
+                        // });
+                      },
+                      icon: Icon(Icons.delete),
+                      color: Colors.red,
+                    ),
+                  );
+                },
+              ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           showModalBottomSheet(
