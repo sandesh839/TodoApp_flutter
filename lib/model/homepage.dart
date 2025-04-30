@@ -38,6 +38,10 @@ class TodoApplication extends StatefulWidget {
 }
 
 class _TodoApplicationState extends State<TodoApplication> {
+  final GlobalKey<FormState> todoFormKey = GlobalKey();
+
+  String title = "";
+  String description = "";
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -46,7 +50,7 @@ class _TodoApplicationState extends State<TodoApplication> {
           "Todo Application",
           style: TextStyle(color: Colors.white),
         ),
-        backgroundColor: Colors.red,
+        backgroundColor: const Color.fromARGB(255, 21, 4, 145),
         centerTitle: true,
       ),
       body: ListView.builder(
@@ -55,10 +59,30 @@ class _TodoApplicationState extends State<TodoApplication> {
           return ListTile(
             leading: Checkbox(
               value: widget.todos[i].isCompleted,
-              onChanged: (value) {},
+              onChanged: (value) {
+                setState(() {
+                  widget.todos[i].isCompleted = value ?? false;
+                });
+              },
             ),
             title: Text(widget.todos[i].title),
             subtitle: Text(widget.todos[i].description),
+            trailing: IconButton(
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (context) {
+                    return AlertDialog();
+                  },
+                );
+
+                // setState(() {
+                //   widget.todos.remove(widget.todos[i]);
+                // });
+              },
+              icon: Icon(Icons.delete),
+              color: Colors.red,
+            ),
           );
         },
       ),
@@ -72,17 +96,52 @@ class _TodoApplicationState extends State<TodoApplication> {
                 child: Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: Form(
+                    key: todoFormKey,
                     child: Column(
                       children: [
                         Text("Add Todo", style: TextStyle(fontSize: 28)),
                         TextFormField(
                           decoration: InputDecoration(labelText: "Title"),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return "Please Provide Description";
+                            } else {
+                              return null;
+                            }
+                          },
+
+                          onSaved: (value) {
+                            setState(() {
+                              title = value!;
+                            });
+                          },
+
+                          onTapOutside:
+                              (event) => FocusScope.of(
+                                context,
+                              ).requestFocus(FocusNode()),
                         ),
                         TextFormField(
                           decoration: InputDecoration(labelText: "Description"),
                           maxLines: 3,
-                        ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return "Please Provide Description";
+                            } else {
+                              return null;
+                            }
+                          },
+                          onSaved: (value) {
+                            setState(() {
+                              description = value!;
+                            });
+                          },
 
+                          onTapOutside:
+                              (event) => FocusScope.of(
+                                context,
+                              ).requestFocus(FocusNode()),
+                        ),
                         Padding(
                           padding: const EdgeInsets.all(8.0),
                           child: Row(
@@ -95,7 +154,26 @@ class _TodoApplicationState extends State<TodoApplication> {
                                 child: Text("Cancel"),
                               ),
                               FilledButton(
-                                onPressed: () {},
+                                onPressed: () {
+                                  if (!todoFormKey.currentState!.validate()) {
+                                    return;
+                                  }
+
+                                  todoFormKey.currentState!.save();
+
+                                  setState(() {
+                                    widget.todos.add(
+                                      Todo(
+                                        id: widget.todos.length.toString(),
+                                        title: title,
+                                        description: description,
+                                        isCompleted: false,
+                                      ),
+                                    );
+                                  });
+
+                                  Navigator.of(context).pop();
+                                },
                                 child: Text("Submit"),
                               ),
                             ],
