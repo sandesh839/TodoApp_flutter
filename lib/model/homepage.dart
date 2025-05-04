@@ -1,34 +1,33 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:todo_app/model/todo.dart';
 
 class TodoApplication extends StatefulWidget {
-  final GlobalKey<FormState> todoformKey = GlobalKey();
-
   TodoApplication({super.key});
 
   final List<Todo> todos = [
     Todo(
       id: "1",
       title: "This is title",
-      description: "Mamaghar janxu",
+      description: "Hero Arun",
       isCompleted: true,
     ),
     Todo(
       id: "2",
       title: "This is title",
-      description: "Mamaghar janxu",
+      description: "Don Arun",
       isCompleted: true,
     ),
     Todo(
       id: "3",
       title: "This is title",
-      description: "Mamaghar janxu",
+      description: "Timro Babe",
       isCompleted: true,
     ),
     Todo(
       id: "4",
       title: "This is title",
-      description: "Mamaghar janxu",
+      description: "Binisha Don",
       isCompleted: true,
     ),
   ];
@@ -38,6 +37,17 @@ class TodoApplication extends StatefulWidget {
 }
 
 class _TodoApplicationState extends State<TodoApplication> {
+  fetchTodos() async {
+    final Dio dio = Dio();
+    final response = await dio.get(
+      'https://jsonplaceholder.typicode.com/todos',
+    );
+
+    for (var todo in response.data) {
+      widget.todos.add(Todo.fromMap(todo));
+    }
+  }
+
   final GlobalKey<FormState> todoFormKey = GlobalKey();
 
   String title = "";
@@ -53,74 +63,102 @@ class _TodoApplicationState extends State<TodoApplication> {
         backgroundColor: const Color.fromARGB(255, 21, 4, 145),
         centerTitle: true,
       ),
-
       body:
           widget.todos.isEmpty
-              ? Center(child: Text("No todos"))
-              : ListView.builder(
-                itemCount: widget.todos.length,
-                itemBuilder: (ctx, i) {
-                  return ListTile(
-                    leading: Checkbox(
-                      value: widget.todos[i].isCompleted,
-                      onChanged: (value) {
-                        setState(() {
-                          widget.todos[i].isCompleted = value ?? false;
-                        });
-                      },
-                    ),
-                    title: Text(widget.todos[i].title),
-                    subtitle: Text(widget.todos[i].description),
-                    trailing: IconButton(
-                      onPressed: () {
-                        showDialog(
-                          context: context,
-                          builder: (context) {
-                            return AlertDialog(
-                              title: Text("Are you want to delete"),
-                              content: Text("This action is irrevesable"),
-                              actions: [
-                                FilledButton.tonal(
-                                  style: FilledButton.styleFrom(
-                                    backgroundColor: Colors.deepPurple.shade400,
-                                    foregroundColor: Colors.white,
-                                  ),
-
-                                  onPressed: () {
-                                    setState(() {
-                                      widget.todos.remove(widget.todos[i]);
-                                    });
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        backgroundColor:
-                                            Colors.greenAccent.shade700,
-                                        behavior: SnackBarBehavior.floating,
-                                        duration: Duration(seconds: 1),
-                                        content: Text("Deleted Successfully"),
+              ? Center(child: Text("Ooops No Any Todo List"))
+              : FutureBuilder(
+                future: fetchTodos(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.done) {
+                    if (snapshot.hasData) {
+                      return ListView.builder(
+                        itemCount: widget.todos.length,
+                        itemBuilder: (ctx, i) {
+                          return ListTile(
+                            leading: Checkbox(
+                              value: widget.todos[i].isCompleted,
+                              onChanged: (value) {
+                                setState(() {
+                                  widget.todos[i].isCompleted = value ?? false;
+                                });
+                              },
+                            ),
+                            title: Text(widget.todos[i].title),
+                            subtitle: Text(widget.todos[i].description ?? "-"),
+                            trailing: IconButton(
+                              onPressed: () {
+                                showDialog(
+                                  context: context,
+                                  builder: (context) {
+                                    return AlertDialog(
+                                      title: Text(
+                                        "Are You Sure To Delete",
+                                        style: TextStyle(color: Colors.red),
                                       ),
+                                      content: Text(
+                                        "This action is irreversible",
+                                      ),
+                                      actions: [
+                                        FilledButton.tonal(
+                                          style: FilledButton.styleFrom(
+                                            backgroundColor:
+                                                Colors.red.shade400,
+                                            foregroundColor: Colors.white,
+                                          ),
+                                          onPressed: () {
+                                            setState(() {
+                                              widget.todos.remove(
+                                                widget.todos[i],
+                                              );
+                                            });
+
+                                            ScaffoldMessenger.of(
+                                              context,
+                                            ).showSnackBar(
+                                              SnackBar(
+                                                backgroundColor:
+                                                    Colors.green.shade500,
+                                                behavior:
+                                                    SnackBarBehavior.floating,
+                                                duration: Duration(seconds: 3),
+                                                showCloseIcon: true,
+                                                content: Text(
+                                                  "Successfully Deleted",
+                                                ),
+                                              ),
+                                            );
+                                            Navigator.of(context).pop();
+                                          },
+                                          child: Text("Yes"),
+                                        ),
+                                        FilledButton(
+                                          onPressed: () {
+                                            Navigator.of(context).pop();
+                                          },
+                                          child: Text("Cancel"),
+                                        ),
+                                      ],
                                     );
-
-                                    Navigator.of(context).pop();
                                   },
-                                  child: Text("Yes"),
-                                ),
-
-                                // FilledButton(onPressed: onPressed, child: child)
-                              ],
-                            );
-                          },
-                        );
-
-                        // setState(() {
-                        //   widget.todos.remove(widget.todos[i]);
-                        // });
-                      },
-                      icon: Icon(Icons.delete),
-                      color: Colors.red,
-                    ),
-                  );
+                                );
+                              },
+                              icon: Icon(Icons.delete),
+                              color: Colors.red,
+                            ),
+                          );
+                        },
+                      );
+                    } else if (snapshot.hasError) {
+                      return Center(child: Text("Error ${snapshot.error}"));
+                    } else {
+                      return Center(child: CircularProgressIndicator());
+                    }
+                  } else {
+                    return Center(child: CircularProgressIndicator());
+                  }
                 },
               ),
+
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           showModalBottomSheet(
@@ -202,7 +240,6 @@ class _TodoApplicationState extends State<TodoApplication> {
                                         id: widget.todos.length.toString(),
                                         title: title,
                                         description: description,
-                                        isCompleted: false,
                                       ),
                                     );
                                   });
