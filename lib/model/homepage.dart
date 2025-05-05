@@ -46,6 +46,7 @@ class _TodoApplicationState extends State<TodoApplication> {
     for (var todo in response.data) {
       widget.todos.add(Todo.fromMap(todo));
     }
+    return widget.todos;
   }
 
   final GlobalKey<FormState> todoFormKey = GlobalKey();
